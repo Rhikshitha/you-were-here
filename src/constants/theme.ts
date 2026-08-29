@@ -1,4 +1,47 @@
-export const COLORS = {
+// src/constants/theme.ts
+
+// Light‑mode palette – default theme
+export const LIGHT_THEME = {
+  // Backgrounds
+  background: '#F7F7F7',
+  surface: '#FFFFFF',
+  surfaceElevated: '#F2F2F2',
+  surfaceBorder: '#E0E0E0',
+
+  // Primary Branding & Accent Colors
+  primary: '#2A68FF', // Calm blue
+  primaryGlow: 'rgba(42, 104, 255, 0.25)',
+  secondary: '#FF6B6B', // Soft red
+  ghost: '#FFB400', // Amber / Gold (Ghost memories)
+  ancient: '#E71D36', // Deep crimson (Ancient memories)
+  mystery: '#A06CD5', // Mystic violet
+
+  // Memory type specific colors
+  memoryTypes: {
+    memory: '#2A68FF',
+    warning: '#FF9F1C',
+    confession: '#FF4D6D',
+    question: '#4EA8DE',
+    time_capsule: '#FFB400',
+    mystery: '#A06CD5',
+  },
+
+  // Text colors
+  textPrimary: '#222222',
+  textSecondary: '#555555',
+  textMuted: '#777777',
+  textDark: '#111111',
+
+  // System & functional colors
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  overlay: 'rgba(255, 255, 255, 0.85)',
+  cardShadow: 'rgba(0, 0, 0, 0.1)',
+} as const;
+
+// Dark‑mode palette (kept for future use)
+export const DARK_THEME = {
   // Backgrounds
   background: '#0B0D10',
   surface: '#15181E',
@@ -8,13 +51,12 @@ export const COLORS = {
   // Primary Branding & Accent Colors
   primary: '#FF6B35', // Warm Ember
   primaryGlow: 'rgba(255, 107, 53, 0.25)',
-  
-  secondary: '#2EC4B6', // Cyan Discovery Accent
-  ghost: '#F7B801',     // Amber / Gold for Ghost Memories (>1 yr)
-  ancient: '#E71D36',   // Deep Crimson for Ancient Memories (>5 yrs)
-  mystery: '#A06CD5',   // Mystic Violet for Secret Memories
+  secondary: '#2EC4B6', // Cyan discovery accent
+  ghost: '#F7B801', // Amber / Gold (Ghost memories)
+  ancient: '#E71D36',
+  mystery: '#A06CD5',
 
-  // Memory Type Specific Colors
+  // Memory type specific colors
   memoryTypes: {
     memory: '#2EC4B6',
     warning: '#FF9F1C',
@@ -24,13 +66,13 @@ export const COLORS = {
     mystery: '#A06CD5',
   },
 
-  // Text Colors
+  // Text colors (dark theme)
   textPrimary: '#F0F4F8',
   textSecondary: '#94A3B8',
   textMuted: '#64748B',
   textDark: '#0D1117',
 
-  // System & Functional
+  // System & functional colors
   success: '#10B981',
   error: '#EF4444',
   warning: '#F59E0B',
@@ -38,6 +80,10 @@ export const COLORS = {
   cardShadow: 'rgba(0, 0, 0, 0.4)',
 } as const;
 
+// Export the active palette – light theme by default
+export const COLORS = LIGHT_THEME;
+
+// Typography, spacing and radius definitions (unchanged)
 export const TYPOGRAPHY = {
   fontSize: {
     xs: 12,

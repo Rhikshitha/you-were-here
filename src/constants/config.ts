@@ -1,6 +1,6 @@
 export const APP_CONFIG = {
   // App Identity
-  // APP_NAME: 'YOU WERE HERE',
+  APP_NAME: 'YOU WERE HERE',
   TAGLINE: 'The world has memories. Go find them.',
 
   // Place Radius Definitions (in meters)

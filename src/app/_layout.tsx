@@ -28,6 +28,14 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="here"
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="create-memory"
               options={{
                 presentation: 'modal',
