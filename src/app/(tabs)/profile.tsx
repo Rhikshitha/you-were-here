@@ -1,32 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { achievementsService, AchievementBadge } from '../../services/achievements';
-import { UserProfileStats } from '../../types/app';
-import { BadgeCard } from '../../components/profile/BadgeCard';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../constants/theme';
-import { User, Award, Compass, MessageSquare, Flame, LogOut, LogIn } from 'lucide-react-native';
+import { User, LogOut, LogIn } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
-
-  const [stats, setStats] = useState<UserProfileStats | null>(null);
-  const [badges, setBadges] = useState<AchievementBadge[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadStatsAndBadges() {
-      setLoading(true);
-      const userStats = await achievementsService.getUserStats(user?.id);
-      const userBadges = await achievementsService.getBadgesWithProgress(user?.id);
-      setStats(userStats);
-      setBadges(userBadges);
-      setLoading(false);
-    }
-    loadStatsAndBadges();
-  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -63,43 +44,6 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           )}
         </View>
-
-        {/* User Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Compass color={COLORS.secondary} size={22} />
-            <Text style={styles.statNumber}>{stats?.places_discovered || 0}</Text>
-            <Text style={styles.statLabel}>Discovered</Text>
-          </View>
-          <View style={styles.statCard}>
-            <MessageSquare color={COLORS.primary} size={22} />
-            <Text style={styles.statNumber}>{stats?.memories_left || 0}</Text>
-            <Text style={styles.statLabel}>Memories Left</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Flame color={COLORS.ghost} size={22} />
-            <Text style={styles.statNumber}>{stats?.ghost_memories_found || 0}</Text>
-            <Text style={styles.statLabel}>Ghost Found</Text>
-          </View>
-        </View>
-
-        {/* Dynamic Achievements Section */}
-        <View style={styles.achievementsSection}>
-          <View style={styles.sectionHeader}>
-            <Award color={COLORS.ghost} size={18} />
-            <Text style={styles.sectionTitle}>Exploration Badges ({badges.filter(b => b.unlocked).length}/{badges.length})</Text>
-          </View>
-
-          {loading ? (
-            <ActivityIndicator color={COLORS.primary} size="small" style={{ marginVertical: SPACING.md }} />
-          ) : (
-            <View style={styles.badgeContainer}>
-              {badges.map((badge) => (
-                <BadgeCard key={badge.id} badge={badge} />
-              ))}
-            </View>
-          )}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -119,7 +63,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceBorder,
-    marginBottom: SPACING.lg,
   },
   avatarContainer: {
     width: 80,
@@ -178,48 +121,5 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    alignItems: 'center',
-  },
-  statNumber: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginTop: SPACING.xs,
-  },
-  statLabel: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: 2,
-  },
-  achievementsSection: {
-    paddingHorizontal: SPACING.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  badgeContainer: {
-    gap: SPACING.sm,
   },
 });
