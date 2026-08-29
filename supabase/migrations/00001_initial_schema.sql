@@ -141,8 +141,9 @@ alter table public.memories enable row level security;
 -- memoriesService.getUnlockedMemories. It is NOT enforced here — any signed-in
 -- user can read public memories directly via the API. Moving that gate server-
 -- side needs an RPC that takes the caller's coordinates.
-create policy "public memories are readable by signed-in users"
-  on public.memories for select to authenticated
+-- Readable by anyone, signed in or not: a memory left in public is public.
+create policy "public memories are readable by everyone"
+  on public.memories for select
   using (
     visibility = 'anyone'
     and moderation_status in ('pending', 'approved')
