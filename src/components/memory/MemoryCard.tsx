@@ -5,7 +5,8 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../constants/theme';
 import { classifyMemoryAge, getAgeColor, getAgeLabel, formatExactTimeAgo } from '../../lib/time';
 import { ReactionBar } from './ReactionBar';
 import { ReportModal } from './ReportModal';
-import { User, Clock, Flame, Flag, Sparkles } from 'lucide-react-native';
+import { User, Clock, Flame, Flag, Sparkles, Trash2 } from 'lucide-react-native';
+import { ActivityIndicator } from 'react-native';
 
 const MEMORY_TYPE_EMOJIS: Record<string, string> = {
   memory: '💭',
@@ -33,10 +34,26 @@ const FORMATTED_TYPE_TITLES: Record<string, string> = {
 
 interface MemoryCardProps {
   memory: MemoryItem;
+  /** Set when the signed-in user wrote this memory; enables deleting it. */
+  onDelete?: (memoryId: string) => Promise<void> | void;
 }
 
-export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
+export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, onDelete }) => {
   const [reportModalVisible, setReportModalVisible] = useState(false);
+  // Two-step inline confirm rather than Alert.alert, which is unreliable on web.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setDeleting(true);
+    try {
+      await onDelete(memory.id);
+    } finally {
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
+  };
 
   const ageCategory = classifyMemoryAge(memory.created_at);
   const ageColor = getAgeColor(ageCategory);
@@ -98,14 +115,48 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
             <Text style={[styles.ageTagText, { color: ageColor }]}>{ageLabel.toUpperCase()}</Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.flagButton}
-            onPress={() => setReportModalVisible(true)}
-          >
-            <Flag color={COLORS.textMuted} size={14} />
-          </TouchableOpacity>
+          {onDelete ? (
+            <TouchableOpacity
+              style={styles.flagButton}
+              onPress={() => setConfirmingDelete((v) => !v)}
+              accessibilityLabel="Delete this memory"
+            >
+              <Trash2 color={COLORS.error} size={14} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.flagButton}
+              onPress={() => setReportModalVisible(true)}
+            >
+              <Flag color={COLORS.textMuted} size={14} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
+
+      {confirmingDelete && (
+        <View style={styles.confirmRow}>
+          <Text style={styles.confirmText}>Delete this memory permanently?</Text>
+          <TouchableOpacity
+            style={styles.confirmCancel}
+            onPress={() => setConfirmingDelete(false)}
+            disabled={deleting}
+          >
+            <Text style={styles.confirmCancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.confirmDelete}
+            onPress={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <ActivityIndicator color={COLORS.textPrimary} size="small" />
+            ) : (
+              <Text style={styles.confirmDeleteText}>Delete</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Memory Content */}
       <Text style={styles.content}>{memory.content}</Text>
@@ -144,6 +195,43 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
 };
 
 const styles = StyleSheet.create({
+  confirmRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: COLORS.error,
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  confirmText: {
+    flex: 1,
+    color: COLORS.error,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+  },
+  confirmCancel: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  confirmCancelText: {
+    color: COLORS.textMuted,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+  },
+  confirmDelete: {
+    backgroundColor: COLORS.error,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.pill,
+    minWidth: 64,
+    alignItems: 'center',
+  },
+  confirmDeleteText: {
+    color: COLORS.textPrimary,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+  },
   card: {
     backgroundColor: COLORS.surface,
     borderColor: COLORS.surfaceBorder,

@@ -4,90 +4,35 @@ import { MemoryItem } from '../types/app';
 import { isMemoryExpired } from '../lib/time';
 import { placesService } from './places';
 
-// Chennai, India mock memories for offline / development testing
-export const MOCK_MEMORIES: Record<string, MemoryItem[]> = {
-  'seed-cafe-1': [
-    {
-      id: 'mem-1',
-      place_id: 'seed-cafe-1',
-      author_id: 'user-1',
-      content: 'Drinking hot filter coffee and eating piping hot idlis with extra sambar here. Nothing beats Sunday mornings in Chennai!',
-      memory_type: 'memory',
-      identity_visibility: 'display_name',
-      visibility: 'anyone',
-      created_at: new Date(Date.now() - 86400000 * 45).toISOString(),
-      expiration_type: 'never',
-      expires_at: null,
-      author_name: 'Ananya Ramesh',
-      author_username: 'ananya_r',
-      reaction_counts: { '❤️': 24, '👀': 8 },
-      user_reaction: '❤️',
-    },
-    {
-      id: 'mem-2',
-      place_id: 'seed-cafe-1',
-      author_id: 'user-2',
-      content: 'Met my college batchmates here after 12 long years. We sat at the corner table for 3 hours remembering our hostel days.',
-      memory_type: 'confession',
-      identity_visibility: 'anonymous',
-      visibility: 'anyone',
-      created_at: new Date(Date.now() - 86400000 * 820).toISOString(), // Ghost memory (> 2 yrs)
-      expiration_type: 'never',
-      expires_at: null,
-      author_name: 'Anonymous Explorer',
-      reaction_counts: { '❤️': 42, '🥲': 14 },
-    },
-    {
-      id: 'mem-3',
-      place_id: 'seed-cafe-1',
-      author_id: 'user-3',
-      content: 'Warning: Park your two-wheeler carefully on the side street. The traffic police tow vehicles during peak hours!',
-      memory_type: 'warning',
-      identity_visibility: 'username',
-      visibility: 'anyone',
-      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-      expiration_type: 'never',
-      expires_at: null,
-      author_name: 'chennai_rider_07',
-      author_username: 'chennai_rider_07',
-      reaction_counts: { '👀': 15 },
-    },
-  ],
-  'seed-beach-1': [
-    {
-      id: 'mem-4',
-      place_id: 'seed-beach-1',
-      author_id: 'user-4',
-      content: 'Watching the sunrise over the Bay of Bengal while drinking fresh tender coconut water. Pure bliss.',
-      memory_type: 'memory',
-      identity_visibility: 'display_name',
-      visibility: 'anyone',
-      created_at: new Date(Date.now() - 86400000 * 392).toISOString(), // Ghost memory (> 1 yr)
-      expiration_type: 'never',
-      expires_at: null,
-      author_name: 'Karthik Raja',
-      author_username: 'karthik_r',
-      reaction_counts: { '❤️': 56, '👀': 19 },
-    },
-  ],
-  'seed-college-1': [
-    {
-      id: 'mem-5',
-      place_id: 'seed-college-1',
-      author_id: 'user-5',
-      content: 'Pulling an all-nighter for Saarang fest prep right under these banyan trees back in 2018. Best years of my life.',
-      memory_type: 'time_capsule',
-      identity_visibility: 'username',
-      visibility: 'anyone',
-      created_at: new Date(Date.now() - 86400000 * 2190).toISOString(), // 6 years ago (Ancient memory)
-      expiration_type: 'never',
-      expires_at: null,
-      author_name: 'iitm_alumnus_18',
-      author_username: 'iitm_alumnus_18',
-      reaction_counts: { '❤️': 89, '🥲': 31 },
-    },
-  ],
-};
+/**
+ * `author_id` and `place_id` are foreign keys; a raw constraint name means
+ * nothing to a user, so translate the ones we can actually hit.
+ */
+function friendlyMemoryError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('memories_author_id_fkey')) {
+    return 'Your profile is still being set up. Reopen the app and try again.';
+  }
+  if (m.includes('memories_place_id_fkey')) {
+    return 'This place no longer exists.';
+  }
+  if (m.includes('row-level security')) {
+    return 'You need to be signed in to leave a memory.';
+  }
+  return message;
+}
+
+/**
+ * Respect each memory's identity_visibility when naming its author.
+ */
+function authorLabel(
+  visibility: string,
+  author: { username?: string | null; display_name?: string | null } | null
+): string {
+  if (visibility === 'anonymous') return 'Anonymous Explorer';
+  if (visibility === 'username') return author?.username ? `@${author.username}` : 'Explorer';
+  return author?.display_name || author?.username || 'Explorer';
+}
 
 export const memoriesService = {
   /**
@@ -105,40 +50,62 @@ export const memoriesService = {
 
       const { data, error } = await supabase
         .from('memories')
-        .select('*')
+        .select('*, profiles:author_id (username, display_name)')
         .eq('place_id', placeId)
         .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        // Return active seeded memories (filtering expired ones)
-        const seedMemories = MOCK_MEMORIES[placeId] || MOCK_MEMORIES['seed-cafe-1'];
-        const activeSeed = seedMemories.filter((m) => !isMemoryExpired(m.expires_at));
-        return { data: activeSeed, error: null };
+      if (error) {
+        return { data: null, error: error.message };
+      }
+      if (!data) {
+        return { data: [], error: null };
       }
 
-      const formatted: MemoryItem[] = data
-        .filter((m: MemoryRow) => !isMemoryExpired(m.expires_at))
-        .map((m: MemoryRow) => ({
-          id: m.id,
-          place_id: m.place_id,
-          author_id: m.author_id,
-          content: m.content,
-          memory_type: m.memory_type,
-          identity_visibility: m.identity_visibility,
-          visibility: m.visibility,
-          created_at: m.created_at,
-          expiration_type: m.expiration_type,
-          expires_at: m.expires_at,
-          author_name:
-            m.identity_visibility === 'anonymous'
-              ? 'Anonymous Explorer'
-              : 'Explorer',
-          reaction_counts: {},
-        }));
+      const formatted: MemoryItem[] = (data as any[])
+        .filter((m) => !isMemoryExpired(m.expires_at))
+        .map((m) => {
+          const author = m.profiles || null;
+          return {
+            id: m.id,
+            place_id: m.place_id,
+            author_id: m.author_id,
+            content: m.content,
+            memory_type: m.memory_type,
+            identity_visibility: m.identity_visibility,
+            visibility: m.visibility,
+            created_at: m.created_at,
+            expiration_type: m.expiration_type,
+            expires_at: m.expires_at,
+            // The author chose per-memory how much of themselves to show.
+            author_name: authorLabel(m.identity_visibility, author),
+            author_username:
+              m.identity_visibility === 'username' ? author?.username ?? null : null,
+            reaction_counts: {},
+          };
+        });
 
       return { data: formatted, error: null };
     } catch (err: any) {
       return { data: null, error: err.message || 'Failed to fetch memories.' };
+    }
+  },
+
+  /**
+   * Delete one of your own memories. The `author_id` filter mirrors the RLS
+   * policy, so another user's memory is never even attempted.
+   */
+  async deleteMemory(memoryId: string, userId: string): Promise<{ error: string | null }> {
+    try {
+      const { error } = await supabase
+        .from('memories')
+        .delete()
+        .eq('id', memoryId)
+        .eq('author_id', userId);
+
+      if (error) return { error: friendlyMemoryError(error.message) };
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message || 'Could not delete this memory.' };
     }
   },
 
@@ -192,29 +159,7 @@ export const memoriesService = {
         .single();
 
       if (error) {
-        // Mock fallback insertion for offline / dev demo
-        const mockNew: MemoryItem = {
-          id: `mem-local-${Date.now()}`,
-          place_id: payload.placeId,
-          author_id: payload.userId,
-          content: cleanContent,
-          memory_type: payload.memoryType,
-          identity_visibility: payload.identityVisibility,
-          visibility: payload.visibility,
-          created_at: new Date().toISOString(),
-          expiration_type: payload.expirationType,
-          expires_at: expiresAt,
-          author_name:
-            payload.identityVisibility === 'anonymous' ? 'Anonymous Explorer' : 'You',
-          reaction_counts: {},
-        };
-
-        if (!MOCK_MEMORIES[payload.placeId]) {
-          MOCK_MEMORIES[payload.placeId] = [];
-        }
-        MOCK_MEMORIES[payload.placeId].unshift(mockNew);
-
-        return { data: mockNew, error: null };
+        return { data: null, error: friendlyMemoryError(error.message) };
       }
 
       const inserted = data as MemoryRow;

@@ -68,11 +68,16 @@ export default function CreateMemoryScreen() {
       setErrorMsg('Missing place identifier.');
       return;
     }
+    // author_id is a foreign key into profiles; there is no valid guest id.
+    if (!user) {
+      setErrorMsg('Please sign in to leave a memory.');
+      return;
+    }
 
     setSubmitting(true);
     const { error } = await memoriesService.createMemory({
       placeId: placeId as string,
-      userId: user?.id || 'guest-user',
+      userId: user.id,
       content: content.trim(),
       memoryType: selectedType,
       identityVisibility: identity,

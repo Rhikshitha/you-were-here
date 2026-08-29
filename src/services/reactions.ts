@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ReactionEmoji } from '../types/database';
 import { APP_CONFIG } from '../constants/config';
-import { MOCK_MEMORIES } from './memories';
 
 export const reactionsService = {
   /**
@@ -44,28 +43,8 @@ export const reactionsService = {
         if (insError) console.warn('Supabase reaction insert error:', insError.message);
         return { action: 'added', error: null };
       }
-    } catch {
-      // Local mock state fallback
-      for (const placeId in MOCK_MEMORIES) {
-        const item = MOCK_MEMORIES[placeId].find((m) => m.id === memoryId);
-        if (item) {
-          if (!item.reaction_counts) item.reaction_counts = {};
-          if (item.user_reaction === emoji) {
-            item.reaction_counts[emoji] = Math.max(0, (item.reaction_counts[emoji] || 1) - 1);
-            item.user_reaction = null;
-            return { action: 'removed', error: null };
-          } else {
-            if (item.user_reaction) {
-              const oldEmoji = item.user_reaction;
-              item.reaction_counts[oldEmoji] = Math.max(0, (item.reaction_counts[oldEmoji] || 1) - 1);
-            }
-            item.reaction_counts[emoji] = (item.reaction_counts[emoji] || 0) + 1;
-            item.user_reaction = emoji;
-            return { action: 'added', error: null };
-          }
-        }
-      }
-      return { action: 'added', error: null };
+    } catch (err: any) {
+      return { action: 'removed', error: err.message || 'Could not save your reaction.' };
     }
   },
 

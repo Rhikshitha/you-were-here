@@ -20,6 +20,7 @@ import { formatDistance } from '../../lib/distance';
 import { formatMemoryAge } from '../../lib/time';
 import { Search, MapPin, Compass, ChevronRight, X } from 'lucide-react-native';
 import { AccountButton } from '../../components/common/AccountButton';
+import { PlacesMap } from '../../components/map/PlacesMap';
 
 // Category Emoji Mapping
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -128,10 +129,18 @@ export default function MapHomeScreen() {
           <TouchableOpacity style={styles.permissionBanner} onPress={requestPermission}>
             <Compass color={COLORS.ghost} size={18} style={{ marginRight: 8 }} />
             <Text style={styles.permissionBannerText}>
-              Enable location access to unlock memories as you explore.
+              Enable location access to see what's around you.
             </Text>
           </TouchableOpacity>
         )}
+
+        <PlacesMap
+          style={styles.map}
+          places={places}
+          userLocation={location}
+          selectedPlaceId={selectedPlace?.id ?? null}
+          onSelectPlace={handleSelectPlace}
+        />
 
         {loading ? (
           <View style={styles.centerContainer}>
@@ -343,6 +352,11 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: TYPOGRAPHY.fontSize.sm,
     marginTop: SPACING.sm,
+  },
+  map: {
+    height: 260,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceBorder,
   },
   placesListContent: {
     padding: SPACING.md,

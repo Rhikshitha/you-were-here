@@ -162,6 +162,45 @@ export const authService = {
   },
 
   /**
+   * Return the user's profile, creating it if it is missing.
+   *
+   * `memories.author_id` and `memory_reactions.user_id` are foreign keys into
+   * `profiles`, so an account without a profile row cannot post anything. The
+   * signup trigger covers new accounts; this covers accounts created before it
+   * existed, and any signup where the trigger did not run.
+   */
+  async ensureProfile(user: {
+    id: string;
+    email?: string | null;
+    user_metadata?: Record<string, any> | null;
+  }): Promise<ProfileRow | null> {
+    const existing = await this.getProfile(user.id);
+    if (existing) return existing;
+
+    const meta = user.user_metadata || {};
+    const fallback = `user_${user.id.replace(/-/g, '').slice(0, 8)}`;
+    const rawUsername = String(meta.username || '').trim().toLowerCase();
+    const username = /^[a-z0-9_]{3,20}$/.test(rawUsername) ? rawUsername : fallback;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        username,
+        display_name: String(meta.display_name || '').trim() || username,
+        avatar_url: null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn('Could not create profile:', error.message);
+      return null;
+    }
+    return data as ProfileRow;
+  },
+
+  /**
    * Fetch profile by User ID
    */
   async getProfile(userId: string): Promise<ProfileRow | null> {

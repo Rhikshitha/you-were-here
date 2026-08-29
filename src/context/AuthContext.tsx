@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(data.session);
           setUser(data.session?.user ?? null);
           if (data.session?.user) {
-            const userProfile = await authService.getProfile(data.session.user.id);
+            const userProfile = await authService.ensureProfile(data.session.user);
             setProfile(userProfile);
           }
         }
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          const userProfile = await authService.getProfile(currentSession.user.id);
+          const userProfile = await authService.ensureProfile(currentSession.user);
           setProfile(userProfile);
         } else {
           setProfile(null);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { placesService } from '../../services/places';
 import { memoriesService } from '../../services/memories';
 import { useLocation } from '../../context/LocationContext';
+import { useAuth } from '../../context/AuthContext';
 import { PlaceSummary, MemoryItem } from '../../types/app';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../constants/theme';
 import { MemoryCard } from '../../components/memory/MemoryCard';
@@ -37,6 +38,7 @@ export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { location, refreshLocation } = useLocation();
+  const { user } = useAuth();
 
   const [place, setPlace] = useState<PlaceSummary | null>(null);
   const [memories, setMemories] = useState<MemoryItem[]>([]);
@@ -70,15 +72,32 @@ export default function PlaceDetailScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchDetailsAndMemories();
-  }, [id, location]);
+  // Refetch on focus, not just on mount: publishing happens in a modal over
+  // this screen, so returning from it changes neither `id` nor `location` and
+  // a plain effect would leave the list stale.
+  useFocusEffect(
+    useCallback(() => {
+      fetchDetailsAndMemories();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, location])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshLocation();
     await fetchDetailsAndMemories();
     setRefreshing(false);
+  };
+
+  const handleDeleteMemory = async (memoryId: string) => {
+    if (!user) return;
+    const { error } = await memoriesService.deleteMemory(memoryId, user.id);
+    if (error) {
+      setMemoryError(error);
+      return;
+    }
+    // Drop it locally rather than refetching the whole list.
+    setMemories((current) => current.filter((m) => m.id !== memoryId));
   };
 
   if (loading) {
@@ -190,7 +209,13 @@ export default function PlaceDetailScreen() {
           ) : (
             <View style={styles.memoriesList}>
               {memories.map((mem) => (
-                <MemoryCard key={mem.id} memory={mem} />
+                <MemoryCard
+                  key={mem.id}
+                  memory={mem}
+                  onDelete={
+                    user && mem.author_id === user.id ? handleDeleteMemory : undefined
+                  }
+                />
               ))}
             </View>
           )}
