@@ -41,6 +41,9 @@ export default function HereScreen() {
   const { location, permissionGranted, requestPermission, refreshLocation } = useLocation();
 
   const [status, setStatus] = useState<Status>('locating');
+  // Bumped by resolve() so "Try Again" re-runs the search even when the
+  // coordinates come back unchanged.
+  const [retryNonce, setRetryNonce] = useState(0);
   const [place, setPlace] = useState<PlaceSummary | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -52,6 +55,7 @@ export default function HereScreen() {
    * them to name this one.
    */
   const resolve = useCallback(async () => {
+    setRetryNonce((n) => n + 1);
     setErrorMsg(null);
     setStatus('locating');
 
@@ -74,8 +78,14 @@ export default function HereScreen() {
   }, []);
 
   // Once coordinates land, look for a place that already covers this spot.
+  //
+  // Deps are strictly the inputs to the search. `status` must NOT be listed:
+  // setStatus('searching') below would re-run the effect and cancel the very
+  // query it just started. A genuine `location` change *should* restart it —
+  // refreshLocation() hands back a new object, so this fires a second time on
+  // open, which is correct and cheap.
   useEffect(() => {
-    if (status !== 'locating' || !location) return;
+    if (!location) return;
 
     let cancelled = false;
     (async () => {
@@ -100,7 +110,7 @@ export default function HereScreen() {
     return () => {
       cancelled = true;
     };
-  }, [location, status]);
+  }, [location, retryNonce]);
 
   const goToComposer = (placeId: string) => {
     router.replace({ pathname: '/create-memory', params: { placeId } });
