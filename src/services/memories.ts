@@ -1,11 +1,10 @@
 import { supabase } from '../lib/supabase';
 import { MemoryRow, MemoryType, IdentityVisibility, MemoryVisibility, ExpirationType } from '../types/database';
-import { MemoryItem, LocationCoordinates } from '../types/app';
-import { calculateHaversineDistance } from '../lib/distance';
+import { MemoryItem } from '../types/app';
 import { isMemoryExpired } from '../lib/time';
 import { placesService } from './places';
 
-// Chennai, India mock memories for offline / development testing when a place is unlocked
+// Chennai, India mock memories for offline / development testing
 export const MOCK_MEMORIES: Record<string, MemoryItem[]> = {
   'seed-cafe-1': [
     {
@@ -92,34 +91,18 @@ export const MOCK_MEMORIES: Record<string, MemoryItem[]> = {
 
 export const memoriesService = {
   /**
-   * Fetch unlocked memories for a place AFTER verifying server/client distance logic
+   * Fetch every memory left at a place. Memories are always readable — there is
+   * no proximity gate.
    */
-  async getUnlockedMemories(
-    placeId: string,
-    userLocation: LocationCoordinates | null
+  async getMemoriesForPlace(
+    placeId: string
   ): Promise<{ data: MemoryItem[] | null; error: string | null }> {
     try {
-      // 1. Fetch place coordinates & radius to check unlock condition
-      const place = await placesService.getPlaceById(placeId, userLocation || undefined);
+      const place = await placesService.getPlaceById(placeId);
       if (!place) {
         return { data: null, error: 'Place not found.' };
       }
 
-      // 2. Strict presence verification safeguard (Zero-leakage enforcement)
-      if (userLocation) {
-        const dist = calculateHaversineDistance(userLocation, {
-          latitude: place.latitude,
-          longitude: place.longitude,
-        });
-        if (dist > place.radius_meters) {
-          return {
-            data: null,
-            error: `Location verification failed. You are ${dist}m away (unlock radius is ${place.radius_meters}m).`,
-          };
-        }
-      }
-
-      // 3. Try fetching from Supabase database RPC or table
       const { data, error } = await supabase
         .from('memories')
         .select('*')

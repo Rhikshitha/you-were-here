@@ -67,7 +67,7 @@ export default function SignupScreen() {
         <View style={styles.headerContainer}>
           <Text style={styles.title}>Join the Memory Layer</Text>
           <Text style={styles.subtitle}>
-            Create your profile to leave and discover hidden memories.
+            Create your profile to leave and discover memories.
           </Text>
         </View>
 

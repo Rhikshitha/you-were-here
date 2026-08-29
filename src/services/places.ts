@@ -117,14 +117,12 @@ export const placesService = {
       // Enhance with distance math and unlock state
       const summaries: PlaceSummary[] = filtered.map((place) => {
         let distance_meters: number | undefined = undefined;
-        let is_unlocked: boolean | undefined = undefined;
 
         if (options?.userLocation) {
           distance_meters = calculateHaversineDistance(options.userLocation, {
             latitude: place.latitude,
             longitude: place.longitude,
           });
-          is_unlocked = distance_meters <= place.radius_meters;
         }
 
         const seedMatch = SEED_PLACES.find((s) => s.id === place.id);
@@ -137,7 +135,6 @@ export const placesService = {
           longitude: place.longitude,
           radius_meters: place.radius_meters,
           distance_meters,
-          is_unlocked,
           memory_count: seedMatch ? seedMatch.memory_count : 0,
           oldest_memory_created_at: seedMatch ? seedMatch.oldest_memory_created_at : null,
           newest_memory_created_at: seedMatch ? seedMatch.newest_memory_created_at : null,
@@ -179,14 +176,12 @@ export const placesService = {
       place = data as PlaceRow;
 
       let distance_meters: number | undefined = undefined;
-      let is_unlocked: boolean | undefined = undefined;
 
       if (userLocation) {
         distance_meters = calculateHaversineDistance(userLocation, {
           latitude: place.latitude,
           longitude: place.longitude,
         });
-        is_unlocked = distance_meters <= place.radius_meters;
       }
 
       return {
@@ -197,7 +192,6 @@ export const placesService = {
         longitude: place.longitude,
         radius_meters: place.radius_meters,
         distance_meters,
-        is_unlocked,
         memory_count: 0,
         oldest_memory_created_at: null,
         newest_memory_created_at: null,
@@ -240,7 +234,6 @@ export const placesService = {
             longitude: place.longitude,
           }),
         }))
-        .filter((m) => m.distance_meters <= m.place.radius_meters)
         .sort((a, b) => a.distance_meters - b.distance_meters);
 
       if (matches.length === 0) {
@@ -257,7 +250,6 @@ export const placesService = {
           longitude: place.longitude,
           radius_meters: place.radius_meters,
           distance_meters,
-          is_unlocked: true,
           memory_count: 0,
           oldest_memory_created_at: null,
           newest_memory_created_at: null,
@@ -322,7 +314,6 @@ export const placesService = {
           longitude: place.longitude,
           radius_meters: place.radius_meters,
           distance_meters: 0,
-          is_unlocked: true,
           memory_count: 0,
           oldest_memory_created_at: null,
           newest_memory_created_at: null,

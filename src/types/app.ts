@@ -48,7 +48,6 @@ export interface PlaceSummary {
   longitude: number;
   radius_meters: number;
   distance_meters?: number;
-  is_unlocked?: boolean;
   memory_count: number;
   oldest_memory_created_at: string | null;
   newest_memory_created_at: string | null;

@@ -1,9 +1,24 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { COLORS } from '../constants/theme';
 import { AuthProvider } from '../context/AuthContext';
 import { LocationProvider } from '../context/LocationContext';
+// Side-effect import: defines the background geofence task at module scope so
+// the OS can find it after the app has been killed and relaunched.
+import { remindersSupported } from '../lib/memoryGeofence';
+
+if (remindersSupported) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 export default function RootLayout() {
   return (

@@ -41,7 +41,7 @@ export const sharingService = {
       const link = this.getPlaceWebLink(placeId);
       const result = await Share.share({
         title: `Hidden Memory at ${placeName}`,
-        message: `A hidden memory was left at ${placeName}. Visit this physical location to unlock what they said.\n\n${link}`,
+        message: `A memory was left at ${placeName}. See what they said.\n\n${link}`,
         url: link,
       });
       return result.action === Share.sharedAction;

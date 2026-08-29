@@ -16,7 +16,8 @@ import { PlaceSummary } from '../../types/app';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../constants/theme';
 import { formatDistance } from '../../lib/distance';
 import { formatMemoryAge } from '../../lib/time';
-import { Compass, Lock, Unlock, ChevronRight } from 'lucide-react-native';
+import { Compass, ChevronRight } from 'lucide-react-native';
+import { AccountButton } from '../../components/common/AccountButton';
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   Cafe: '☕',
@@ -65,9 +66,11 @@ export default function NearbyScreen() {
         <View style={styles.headerTitleRow}>
           <Compass color={COLORS.secondary} size={24} style={{ marginRight: 8 }} />
           <Text style={styles.title}>Nearby Places</Text>
+          <View style={{ flex: 1 }} />
+          <AccountButton />
         </View>
         <Text style={styles.subtitle}>
-          Places with hidden memories ordered by physical distance.
+          Places with memories, ordered by how close you are.
         </Text>
       </View>
 
@@ -97,12 +100,11 @@ export default function NearbyScreen() {
           ) : (
             places.map((place) => {
               const emoji = CATEGORY_EMOJIS[place.category] || '📍';
-              const isUnlocked = place.is_unlocked ?? false;
 
               return (
                 <TouchableOpacity
                   key={place.id}
-                  style={[styles.placeCard, isUnlocked && styles.placeCardUnlocked]}
+                  style={styles.placeCard}
                   onPress={() => router.push(`/place/${place.id}`)}
                 >
                   <View style={styles.cardHeader}>
@@ -114,19 +116,6 @@ export default function NearbyScreen() {
                       </Text>
                     </View>
 
-                    <View style={styles.statusPill}>
-                      {isUnlocked ? (
-                        <View style={styles.unlockedTag}>
-                          <Unlock color={COLORS.success} size={14} style={{ marginRight: 4 }} />
-                          <Text style={styles.unlockedText}>Unlocked</Text>
-                        </View>
-                      ) : (
-                        <View style={styles.lockedTag}>
-                          <Lock color={COLORS.textMuted} size={14} style={{ marginRight: 4 }} />
-                          <Text style={styles.lockedText}>Locked ({place.radius_meters}m)</Text>
-                        </View>
-                      )}
-                    </View>
                   </View>
 
                   <View style={styles.cardBody}>
@@ -221,10 +210,6 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     gap: SPACING.sm,
   },
-  placeCardUnlocked: {
-    borderColor: COLORS.secondary,
-    backgroundColor: COLORS.surfaceElevated,
-  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -240,24 +225,6 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  statusPill: {},
-  unlockedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  unlockedText: {
-    color: COLORS.success,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-  lockedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  lockedText: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.xs,
   },
   cardBody: {
     flexDirection: 'row',

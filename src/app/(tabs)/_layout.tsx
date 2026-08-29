@@ -1,6 +1,6 @@
 import { Tabs, useRouter } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { Map, Compass, User, Plus } from 'lucide-react-native';
+import { Map, Compass, Plus } from 'lucide-react-native';
 import { COLORS } from '../../constants/theme';
 
 export default function TabLayout() {
@@ -52,13 +52,6 @@ export default function TabLayout() {
             e.preventDefault();
             router.push('/here');
           },
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Me',
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
     </Tabs>

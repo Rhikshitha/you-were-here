@@ -8,7 +8,14 @@
     "scheme": "youwerehere",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Used to unlock the memories hidden at places you are standing in.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to remind you when you pass by a place where you left a memory.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +24,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "output": "static",
@@ -33,7 +46,17 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "locationWhenInUsePermission": "Used to unlock the memories hidden at places you are standing in.",
+          "locationAlwaysAndWhenInUsePermission": "Used to remind you when you pass by a place where you left a memory."
+        }
+      ],
+      "expo-notifications",
+      "expo-task-manager"
     ],
     "experiments": {
       "typedRoutes": true,

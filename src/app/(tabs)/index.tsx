@@ -18,7 +18,8 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../constants/theme';
 import { APP_CONFIG } from '../../constants/config';
 import { formatDistance } from '../../lib/distance';
 import { formatMemoryAge } from '../../lib/time';
-import { Search, MapPin, Compass, Lock, Unlock, ChevronRight, X } from 'lucide-react-native';
+import { Search, MapPin, Compass, ChevronRight, X } from 'lucide-react-native';
+import { AccountButton } from '../../components/common/AccountButton';
 
 // Category Emoji Mapping
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -76,6 +77,8 @@ export default function MapHomeScreen() {
               <Text style={styles.locationActiveText}>GPS Active</Text>
             </View>
           )}
+          <View style={{ flex: 1 }} />
+          <AccountButton />
         </View>
 
         {/* Search Input */}
@@ -140,7 +143,6 @@ export default function MapHomeScreen() {
             {places.map((place) => {
               const emoji = CATEGORY_EMOJIS[place.category] || '📍';
               const isSelected = selectedPlace?.id === place.id;
-              const isUnlocked = place.is_unlocked ?? false;
 
               return (
                 <TouchableOpacity
@@ -165,13 +167,7 @@ export default function MapHomeScreen() {
                     </View>
                   </View>
 
-                  <View style={styles.lockBadge}>
-                    {isUnlocked ? (
-                      <Unlock color={COLORS.success} size={18} />
-                    ) : (
-                      <Lock color={COLORS.textMuted} size={18} />
-                    )}
-                  </View>
+                  <ChevronRight color={COLORS.textMuted} size={18} />
                 </TouchableOpacity>
               );
             })}
@@ -190,7 +186,7 @@ export default function MapHomeScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.sheetName}>{selectedPlace.name}</Text>
                 <Text style={styles.sheetCategory}>
-                  {selectedPlace.category} • Radius: {selectedPlace.radius_meters}m
+                  {selectedPlace.category}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setSelectedPlace(null)}>
@@ -202,7 +198,7 @@ export default function MapHomeScreen() {
           <View style={styles.sheetStatsBox}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{selectedPlace.memory_count}</Text>
-              <Text style={styles.statLabel}>Memories Hidden</Text>
+              <Text style={styles.statLabel}>Memories</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -225,26 +221,11 @@ export default function MapHomeScreen() {
           </View>
 
           <TouchableOpacity
-            style={[
-              styles.exploreActionButton,
-              !selectedPlace.is_unlocked && styles.exploreActionButtonLocked,
-            ]}
+            style={styles.exploreActionButton}
             onPress={() => router.push(`/place/${selectedPlace.id}`)}
           >
-            {selectedPlace.is_unlocked ? (
-              <>
-                <Unlock color={COLORS.textPrimary} size={18} style={{ marginRight: 8 }} />
-                <Text style={styles.actionButtonText}>👀 Explore Place</Text>
-              </>
-            ) : (
-              <>
-                <Lock color={COLORS.textPrimary} size={18} style={{ marginRight: 8 }} />
-                <Text style={styles.actionButtonText}>
-                  📍 Visit Place to Unlock ({formatDistance(selectedPlace.distance_meters || 0)}{' '}
-                  away)
-                </Text>
-              </>
-            )}
+            <MapPin color={COLORS.textPrimary} size={18} style={{ marginRight: 8 }} />
+            <Text style={styles.actionButtonText}>Explore Place</Text>
             <ChevronRight color={COLORS.textPrimary} size={18} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
         </View>
@@ -422,9 +403,6 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     marginLeft: 4,
   },
-  lockBadge: {
-    paddingLeft: SPACING.sm,
-  },
   previewSheet: {
     position: 'absolute',
     bottom: 0,
@@ -495,9 +473,6 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.md,
-  },
-  exploreActionButtonLocked: {
-    backgroundColor: COLORS.surfaceBorder,
   },
   actionButtonText: {
     color: COLORS.textPrimary,

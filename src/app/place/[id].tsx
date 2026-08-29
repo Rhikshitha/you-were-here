@@ -15,8 +15,6 @@ import { memoriesService } from '../../services/memories';
 import { useLocation } from '../../context/LocationContext';
 import { PlaceSummary, MemoryItem } from '../../types/app';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../../constants/theme';
-import { verifyLocationUnlock } from '../../lib/locationVerification';
-import { UnlockStatusCard } from '../../components/place/UnlockStatusCard';
 import { MemoryCard } from '../../components/memory/MemoryCard';
 import { ShareModal } from '../../components/sharing/ShareModal';
 import { formatDistance } from '../../lib/distance';
@@ -57,13 +55,10 @@ export default function PlaceDetailScreen() {
     setPlace(placeData);
     setLoading(false);
 
-    // 2. Verify physical presence & fetch unlocked memories stream
+    // 2. Fetch this place's memories
     if (placeData) {
       setLoadingMemories(true);
-      const { data, error } = await memoriesService.getUnlockedMemories(
-        id as string,
-        location || null
-      );
+      const { data, error } = await memoriesService.getMemoriesForPlace(id as string);
       if (error) {
         setMemoryError(error);
         setMemories([]);
@@ -115,11 +110,6 @@ export default function PlaceDetailScreen() {
   }
 
   const emoji = CATEGORY_EMOJIS[place.category] || '📍';
-  const verification = verifyLocationUnlock(
-    location,
-    { latitude: place.latitude, longitude: place.longitude },
-    place.radius_meters
-  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -157,7 +147,7 @@ export default function PlaceDetailScreen() {
           <Text style={styles.heroTitle}>{place.name}</Text>
           <View style={styles.categoryPill}>
             <Text style={styles.categoryPillText}>
-              {place.category} • Radius: {place.radius_meters}m
+              {place.category}
             </Text>
           </View>
 
@@ -171,22 +161,19 @@ export default function PlaceDetailScreen() {
           )}
         </View>
 
-        {/* Location Verification Status Card */}
-        <UnlockStatusCard verification={verification} onRefreshLocation={refreshLocation} />
-
-        {/* Unlocked Memories Section */}
+        {/* Memories Section */}
         <View style={styles.memoriesSection}>
           <View style={styles.sectionHeaderRow}>
             <MessageSquare color={COLORS.primary} size={18} style={{ marginRight: 6 }} />
             <Text style={styles.sectionTitle}>
-              Unlocked Memories ({memories.length})
+              Memories ({memories.length})
             </Text>
           </View>
 
           {loadingMemories ? (
             <View style={styles.loadingMemoriesBox}>
               <ActivityIndicator color={COLORS.primary} size="small" />
-              <Text style={styles.loadingMemoriesText}>Unlocking memories stream...</Text>
+              <Text style={styles.loadingMemoriesText}>Loading memories...</Text>
             </View>
           ) : memoryError ? (
             <View style={styles.errorBox}>
@@ -195,9 +182,9 @@ export default function PlaceDetailScreen() {
             </View>
           ) : memories.length === 0 ? (
             <View style={styles.emptyMemoriesBox}>
-              <Text style={styles.emptyMemoriesTitle}>No memories unlocked yet</Text>
+              <Text style={styles.emptyMemoriesTitle}>No memories here yet</Text>
               <Text style={styles.emptyMemoriesSub}>
-                Be the first to leave a hidden memory at this location!
+                Be the first to leave one at this place.
               </Text>
             </View>
           ) : (
@@ -211,7 +198,7 @@ export default function PlaceDetailScreen() {
 
         {/* Leave Memory Action Button */}
         <TouchableOpacity
-          style={[styles.leaveButton, !verification.isUnlocked && styles.leaveButtonLocked]}
+          style={styles.leaveButton}
           onPress={() => router.push({ pathname: '/create-memory', params: { placeId: id } })}
         >
           <Plus color={COLORS.textPrimary} size={18} style={{ marginRight: 8 }} />
@@ -390,9 +377,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  leaveButtonLocked: {
-    opacity: 0.8,
   },
   leaveButtonText: {
     color: COLORS.textPrimary,
